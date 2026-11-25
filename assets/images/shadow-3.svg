@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 1500" preserveAspectRatio="none">
+<defs>
+  <radialGradient id="pshadow-3" cx="0.5" cy="0.5" r="0.5">
+    <stop offset="0" stop-color="#0ea5ea" stop-opacity="0.4"/>
+    <stop offset="0.45" stop-color="#7c5cff" stop-opacity="0.168"/>
+    <stop offset="0.75" stop-color="#7c5cff" stop-opacity="0.048"/>
+    <stop offset="1" stop-color="#7c5cff" stop-opacity="0"/>
+  </radialGradient>
+</defs>
+<rect width="560" height="1500" fill="url(#pshadow-3)"/>
+</svg>

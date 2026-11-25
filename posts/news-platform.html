@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vue 3 + Spring Boot 3 全栈：一个新闻平台是怎么从三张表长出来的 · 黄少荣的个人博客</title>
+<meta name="description" content="三张表、19 个接口、7 个页面，一个人从建表做到部署。这篇把关键决策记下来：分层怎么切、分页怎么做、Token 怎么失效。">
+<meta name="author" content="黄少荣">
+<meta name="theme-color" content="#070d18">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="黄少荣 · hsr.ct.ws">
+<meta property="og:title" content="Vue 3 + Spring Boot 3 全栈：一个新闻平台是怎么从三张表长出来的 · 黄少荣的个人博客">
+<meta property="og:description" content="三张表、19 个接口、7 个页面，一个人从建表做到部署。这篇把关键决策记下来：分层怎么切、分页怎么做、Token 怎么失效。">
+<meta property="og:locale" content="zh_CN">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../assets/images/avatar.png">
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true"><symbol id="i-arrow-forward-outline" viewBox="0 0 512 512"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="48" d="M268 112l144 144-144 144M392 256H100"/></symbol>
+<symbol id="i-arrow-up-outline" viewBox="0 0 512 512"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="48" d="M112 244l144-144 144 144M256 120v292"/></symbol>
+<symbol id="i-calendar-outline" viewBox="0 0 512 512"><rect fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="32" x="48" y="80" width="416" height="384" rx="48"/><circle cx="296" cy="232" r="24"/><circle cx="376" cy="232" r="24"/><circle cx="296" cy="312" r="24"/><circle cx="376" cy="312" r="24"/><circle cx="136" cy="312" r="24"/><circle cx="216" cy="312" r="24"/><circle cx="136" cy="392" r="24"/><circle cx="216" cy="392" r="24"/><circle cx="296" cy="392" r="24"/><path fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="32" stroke-linecap="round" d="M128 48v32M384 48v32"/><path fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="32" d="M464 160H48"/></symbol>
+<symbol id="i-call-outline" viewBox="0 0 512 512"><path d="M451 374c-15.88-16-54.34-39.35-73-48.76-24.3-12.24-26.3-13.24-45.4.95-12.74 9.47-21.21 17.93-36.12 14.75s-47.31-21.11-75.68-49.39-47.34-61.62-50.53-76.48 5.41-23.23 14.79-36c13.22-18 12.22-21 .92-45.3-8.81-18.9-32.84-57-48.9-72.8C119.9 44 119.9 47 108.83 51.6A160.15 160.15 0 0083 65.37C67 76 58.12 84.83 51.91 98.1s-9 44.38 23.07 102.64 54.57 88.05 101.14 134.49S258.5 406.64 310.85 436c64.76 36.27 89.6 29.2 102.91 23s22.18-15 32.83-31a159.09 159.09 0 0013.8-25.8C465 391.17 468 391.17 451 374z" fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="32"/></symbol>
+<symbol id="i-close-outline" viewBox="0 0 512 512"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="32" d="M368 368L144 144M368 144L144 368"/></symbol>
+<symbol id="i-download-outline" viewBox="0 0 512 512"><path d="M336 176h40a40 40 0 0140 40v208a40 40 0 01-40 40H136a40 40 0 01-40-40V216a40 40 0 0140-40h40" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="32"/><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="32" d="M176 272l80 80 80-80M256 48v288"/></symbol>
+<symbol id="i-link-outline" viewBox="0 0 512 512"><path d="M208 352h-64a96 96 0 010-192h64M304 160h64a96 96 0 010 192h-64M163.29 256h187.42" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="36"/></symbol>
+<symbol id="i-location-outline" viewBox="0 0 512 512"><path d="M256 48c-79.5 0-144 61.39-144 137 0 87 96 224.87 131.25 272.49a15.77 15.77 0 0025.5 0C304 409.89 400 272.07 400 185c0-75.61-64.5-137-144-137z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="32"/><circle cx="256" cy="192" r="48" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="32"/></symbol>
+<symbol id="i-logo-github" viewBox="0 0 512 512"><path d="M256 32C132.3 32 32 134.9 32 261.7c0 101.5 64.2 187.5 153.2 217.9a17.56 17.56 0 003.8.4c8.3 0 11.5-6.1 11.5-11.4 0-5.5-.2-19.9-.3-39.1a102.4 102.4 0 01-22.6 2.7c-43.1 0-52.9-33.5-52.9-33.5-10.2-26.5-24.9-33.6-24.9-33.6-19.5-13.7-.1-14.1 1.4-14.1h.1c22.5 2 34.3 23.8 34.3 23.8 11.2 19.6 26.2 25.1 39.6 25.1a63 63 0 0025.6-6c2-14.8 7.8-24.9 14.2-30.7-49.7-5.8-102-25.5-102-113.5 0-25.1 8.7-45.6 23-61.6-2.3-5.8-10-29.2 2.2-60.8a18.64 18.64 0 015-.5c8.1 0 26.4 3.1 56.6 24.1a208.21 208.21 0 01112.2 0c30.2-21 48.5-24.1 56.6-24.1a18.64 18.64 0 015 .5c12.2 31.6 4.5 55 2.2 60.8 14.3 16.1 23 36.6 23 61.6 0 88.2-52.4 107.6-102.3 113.3 8 7.1 15.2 21.1 15.2 42.5 0 30.7-.3 55.5-.3 63 0 5.4 3.1 11.5 11.4 11.5a19.35 19.35 0 004-.4C415.9 449.2 480 363.1 480 261.7 480 134.9 379.7 32 256 32z"/></symbol>
+<symbol id="i-mail-outline" viewBox="0 0 512 512"><rect x="48" y="96" width="416" height="320" rx="40" ry="40" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="32"/><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="32" d="M112 160l144 112 144-112"/></symbol>
+<symbol id="i-menu-outline" viewBox="0 0 512 512"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="32" d="M80 160h352M80 256h352M80 352h352"/></symbol>
+<symbol id="i-paper-plane-outline" viewBox="0 0 512 512"><path d="M53.12 199.94l400-151.39a8 8 0 0110.33 10.33l-151.39 400a8 8 0 01-15-.34l-67.4-166.09a16 16 0 00-10.11-10.11L53.46 215a8 8 0 01-.34-15.06zM460 52L227 285" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="32"/></symbol>
+<symbol id="i-time-outline" viewBox="0 0 512 512"><path d="M256 64C150 64 64 150 64 256s86 192 192 192 192-86 192-192S362 64 256 64z" fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="32"/><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="32" d="M256 128v144h96"/></symbol></svg>
+<a class="skip-link" href="#main">跳到正文</a>
+
+<header class="site-header" data-header>
+  <div class="container header-inner">
+    <a class="brand" href="../index.html" aria-label="黄少荣 · 首页">
+      <img src="../assets/images/logo.svg" width="38" height="38" alt="">
+      <span class="brand-name"><b>黄少荣</b><span>HSR · BLOG</span></span>
+    </a>
+
+    <nav class="nav" data-nav aria-label="主导航">
+      <div class="nav-top">
+        <a class="brand" href="../index.html">
+          <img src="../assets/images/logo.svg" width="34" height="34" alt="">
+          <span class="brand-name"><b>黄少荣</b><span>HSR · BLOG</span></span>
+        </a>
+        <button class="nav-toggle" type="button" data-nav-close aria-label="关闭菜单"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-close-outline"></use></svg></button>
+      </div>
+      <ul class="nav-list">
+          <li><a class="nav-link" href="../index.html">首页</a></li>
+          <li><a class="nav-link is-active" href="../blog.html">博客</a></li>
+          <li><a class="nav-link" href="../projects.html">项目</a></li>
+          <li><a class="nav-link" href="../about.html">关于我</a></li>
+          <li><a class="nav-link" href="../contact.html">联系我</a></li>
+      </ul>
+      <div class="nav-foot">
+        <a class="btn btn-primary btn-sm" href="../contact.html">聊聊合作 <svg class="icon icon--sm" aria-hidden="true" focusable="false"><use href="#i-arrow-forward-outline"></use></svg></a>
+        <a class="btn btn-ghost btn-sm" href="../assets/files/huangshaorong-resume.pdf" download>下载简历 PDF <svg class="icon icon--sm" aria-hidden="true" focusable="false"><use href="#i-download-outline"></use></svg></a>
+      </div>
+    </nav>
+
+    <div class="header-actions">
+      <a class="btn btn-primary btn-sm" href="../contact.html">聊一聊 <svg class="icon icon--sm" aria-hidden="true" focusable="false"><use href="#i-arrow-forward-outline"></use></svg></a>
+      <button class="nav-toggle" type="button" data-nav-toggle aria-label="打开菜单" aria-expanded="false"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-menu-outline"></use></svg></button>
+    </div>
+  </div>
+</header>
+<div class="nav-scrim" data-nav-scrim></div>
+
+<div class="read-progress" data-progress></div>
+<main id="main">
+  <article>
+    <header class="article-head">
+      <div class="container">
+        <nav class="crumbs" aria-label="面包屑">
+          <a href="../index.html">首页</a><span>/</span>
+          <a href="../blog.html">博客</a><span>/</span>
+          <a href="../blog.html?cat=fullstack">全栈开发</a>
+        </nav>
+        <h1>Vue 3 + Spring Boot 3 全栈：一个新闻平台是怎么从三张表长出来的</h1>
+        <p class="article-lead">「大事件」新闻资讯管理平台是我第一个独立交付的全栈项目。回头看，真正值钱的不是那 19 个接口，而是几个当时想清楚了的决定。</p>
+        <div class="article-meta">
+          <div class="author">
+            <img src="../assets/images/portrait.jpg" width="42" height="42" alt="黄少荣">
+            <div><b>黄少荣</b><span>物联网工程（师范）</span></div>
+          </div>
+          <span class="meta-sep"></span>
+          <span class="card-meta__row"><svg class="icon icon--sm" aria-hidden="true" focusable="false"><use href="#i-calendar-outline"></use></svg>2026 年 8 月 18 日</span>
+          <span class="card-meta__row"><svg class="icon icon--sm" aria-hidden="true" focusable="false"><use href="#i-time-outline"></use></svg>12 分钟阅读</span>
+          <span class="badge">全栈开发</span>
+        </div>
+      </div>
+      <div class="container">
+        <figure class="article-cover">
+          <img src="../assets/images/covers/news-platform.svg" alt="" width="1600" height="900">
+        </figure>
+      </div>
+    </header>
+
+    <div class="container article-layout">
+      <div class="prose" data-article-body>
+
+<h2>范围先定死</h2>
+<p>需求只有一句话：用户能注册登录，能按分类管理文章，文章支持富文本和图片。我把范围压到三张表——<code>user</code>、<code>category</code>、<code>article</code>，外键关联，不做多级分类、不做评论、不做标签云。范围越小，越有可能把每一层写干净。</p>
+
+<h2>表设计：先想查询，再想字段</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>表</th><th>关键字段</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td>user</td><td>id, username, password, nickname, avatar, create_time</td><td>密码存 MD5，登录态交给 JWT + Redis</td></tr>
+<tr><td>category</td><td>id, name, alias, create_time</td><td>分类不做树，够用</td></tr>
+<tr><td>article</td><td>id, title, content, cover, state, category_id, create_user, create_time, update_time</td><td>state 用自定义注解约束取值</td></tr>
+</tbody>
+</table></div>
+<p>列表页要按「分类 + 状态 + 关键词」组合筛选并分页，所以 <code>category_id</code> 与 <code>state</code> 上建了联合索引，<code>title</code> 走 <code>like</code> 前置匹配。<code>content</code> 用 <code>longtext</code>，但列表查询时绝不 <code>select *</code>——这是最容易被忽略、又最容易拖慢接口的一条。</p>
+
+<h2>后端分层：Controller / Service / Mapper / POJO</h2>
+<p>四层各管一件事，Controller 只做参数接收与响应包装，Service 承载业务与事务，Mapper 只写 SQL，POJO 里分 entity / dto / vo。听起来是教科书，但好处在联调期特别明显：前端说字段不对，直接看 vo；SQL 结果不对，直接看 mapper。</p>
+<pre><code>@RestController
+@RequestMapping("/article")
+public class ArticleController {
+    @GetMapping
+    public Result<PageResult<ArticleVO>> page(
+            @RequestParam(defaultValue = "1") Integer pageNum,
+            @RequestParam(defaultValue = "10") Integer pageSize,
+            String categoryId, String state, String keyword) {
+        return Result.success(articleService.page(pageNum, pageSize, categoryId, state, keyword));
+    }
+}</code></pre>
+<p>统一响应体 <code>{code, message, data}</code>，加上 <code>GlobalExceptionHandler</code> 统一兜异常，前端拦截器只需要处理一种结构。</p>
+
+<h2>多条件分页：动态 SQL + PageHelper</h2>
+<pre><code>&lt;select id="page" resultType="ArticleVO"&gt;
+  select a.id, a.title, a.cover, a.state, a.create_time,
+         c.name as categoryName
+  from article a left join category c on a.category_id = c.id
+  &lt;where&gt;
+    &lt;if test="categoryId != null and categoryId != ''"&gt;and a.category_id = #{categoryId}&lt;/if&gt;
+    &lt;if test="state != null and state != ''"&gt;and a.state = #{state}&lt;/if&gt;
+    &lt;if test="keyword != null and keyword != ''"&gt;and a.title like concat('%', #{keyword}, '%')&lt;/if&gt;
+  &lt;/where&gt;
+  order by a.create_time desc
+&lt;/select&gt;</code></pre>
+<p>注意 <code>#{}</code> 与 <code>${}</code> 的区别——排序字段如果允许前端传，就必须走白名单映射，否则等着被注入。</p>
+
+<h2>认证：JWT + Redis，改密后旧 Token 必须失效</h2>
+<p>纯 JWT 是无状态的，好处是省查询，坏处是"签发即生效直到过期"，改完密码旧 Token 还能用。处理方式：JWT 里只放 <code>userId</code>，真正的登录态存在 Redis，key 为 <code>login:token:{userId}</code>，TTL 与 JWT 过期时间一致。拦截器校验 JWT 签名之后，再查一次 Redis 是否还有这个 token。</p>
+<ul>
+  <li>登录：签发 JWT → 写 Redis。</li>
+  <li>改密：删除 Redis 中该用户的 key → 旧 Token 立即失效。</li>
+  <li>退出：同样删除 key，服务端可控。</li>
+</ul>
+<p>代价是每次请求多一次 Redis 查询，本地压测 3000 QPS 以内毫无压力，换来的可控性完全值得。</p>
+
+<h2>前端：7 个页面，三个关键封装</h2>
+<ul>
+  <li><strong>Axios 拦截器</strong>：请求自动注入 <code>Authorization</code>；响应统一判 <code>code === 401</code> 就清 token 跳登录，别让每个页面自己写一遍。</li>
+  <li><strong>Pinia + persistedstate</strong>：token 与用户信息持久化，刷新不掉登录态。</li>
+  <li><strong>路由守卫</strong>：未登录访问管理页直接重定向，避免页面先渲染再闪走。</li>
+</ul>
+<p>页面结构是登录、布局、分类管理、文章管理、个人中心、头像修改、密码重置。富文本用 vue-quill，图片上传直传阿里云 OSS——后端只负责签发上传凭证，不代理文件流，省带宽也省内存。</p>
+
+<h2>踩过的坑</h2>
+<ul>
+  <li>富文本提交的 HTML 里带 <code>style</code>，后端入库前要过滤危险标签，XSS 不只在评论区。</li>
+  <li><code>Long</code> 型 id 传到前端丢精度，统一序列化成字符串。</li>
+  <li>分页参数为 0 或负数时要兜住，PageHelper 会直接抛异常。</li>
+  <li>跨域在开发代理与生产同源两种模式下表现不同，别只在本地调通就上线。</li>
+</ul>
+
+<h2>复盘</h2>
+<p>这个项目让我真正明白分层不是为了好看：改需求时，能定位到"改哪一层"比"改得快"重要得多。下一个项目（EduPrism）接口数量翻了近三倍，正是因为分层切得干净，加接口几乎是纯体力活。</p>
+
+        <div class="article-foot">
+          <div class="row">
+            <div class="chip-list"><a class="chip" href="../blog.html?cat=fullstack">Vue 3</a><a class="chip" href="../blog.html?cat=fullstack">Spring Boot</a><a class="chip" href="../blog.html?cat=fullstack">MyBatis</a><a class="chip" href="../blog.html?cat=fullstack">JWT</a></div>
+            <div class="share-row">
+              <button class="btn-icon" type="button" data-copy-link aria-label="复制本文链接"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-link-outline"></use></svg></button>
+              <a class="btn-icon" href="mailto:3233721297@qq.com?subject=Vue 3 + Spring Boot 3 全栈：一个新闻平台是怎么从三张表长出来的" aria-label="邮件分享"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-mail-outline"></use></svg></a>
+            </div>
+          </div>
+          <nav class="post-nav" aria-label="上一篇下一篇"><a href="../posts/vibe-coding.html"><span>上一篇</span><b>Vibe-Coding 工作流：把需求拆成提示词的五步</b></a><a href="../posts/ble-gatt.html"><span>下一篇</span><b>BLE 5.0 联调笔记：MTU、分片、断线重连，这三件事决定数据稳不稳</b></a></nav>
+        </div>
+      </div>
+
+      <aside class="toc" data-toc>
+        <p class="toc-title">本文目录</p>
+        <ul class="toc-list" data-toc-list></ul>
+        <div class="toc-cta">
+          看完有问题？<a class="btn-link" href="../contact.html">直接问我 <svg class="icon icon--sm" aria-hidden="true" focusable="false"><use href="#i-arrow-forward-outline"></use></svg></a>
+        </div>
+      </aside>
+    </div>
+  </article>
+
+  <section class="section section--tight">
+    <div class="container">
+      <div class="section-head"><div><h2 class="section-title">相关文章</h2></div></div>
+      <div class="post-grid">
+<article class="post-card" data-post data-cat="backend" data-search-text="智教棱镜：275 个节点的能力图谱，怎么从标准文件变成可查询的结构 把师范生教师职业能力标准拆成 7 类节点、7 类关系，做成 275 节点 / 298 关系的图谱，再用六个智能体在图上做诊断。踩得最狠的坑是 schema 没定就先写代码。 Neo4j Flask 知识图谱 Docker 后端与数据" data-reveal style="--delay:0ms">
+  <a class="card-banner img-holder" href="../posts/eduprism.html" aria-label="智教棱镜：275 个节点的能力图谱，怎么从标准文件变成可查询的结构">
+    <img src="../assets/images/covers/eduprism.svg" alt="" width="1600" height="900" loading="lazy">
+    <span class="badge badge--on-image">后端与数据</span>
+  </a>
+  <div class="card-body">
+    <div class="card-meta">
+      <span class="card-meta__row"><svg class="icon icon--sm" aria-hidden="true" focusable="false"><use href="#i-time-outline"></use></svg>13 分钟</span>
+      <span class="dot-sep"></span>
+      <time datetime="2026-10-22">2026-10-22</time>
+    </div>
+    <h3><a href="../posts/eduprism.html">智教棱镜：275 个节点的能力图谱，怎么从标准文件变成可查询的结构</a></h3>
+    <p class="card-excerpt">把师范生教师职业能力标准拆成 7 类节点、7 类关系，做成 275 节点 / 298 关系的图谱，再用六个智能体在图上做诊断。踩得最狠的坑是 schema 没定就先写代码。</p>
+    <div class="card-foot">
+      <div class="card-tags"><span>#Neo4j</span><span>#Flask</span></div>
+      <a class="btn-link" href="../posts/eduprism.html">阅读 <svg class="icon icon--sm" aria-hidden="true" focusable="false"><use href="#i-arrow-forward-outline"></use></svg></a>
+    </div>
+  </div>
+</article>
+<article class="post-card" data-post data-cat="harmony" data-search-text="把 Python 训好的 MLP 搬进 ArkTS：鸿蒙脑电监测里的零依赖推理 从 TGAM 传感器到 Canvas 波形，端到端一个人写完。最难的不是蓝牙，而是怎么把 Python 训练出来的权重，装进一个不能装第三方库的 ArkTS 工程里。 ArkTS BLE 5.0 MLP Canvas 2D 鸿蒙与物联网" data-reveal style="--delay:60ms">
+  <a class="card-banner img-holder" href="../posts/harmony-eeg.html" aria-label="把 Python 训好的 MLP 搬进 ArkTS：鸿蒙脑电监测里的零依赖推理">
+    <img src="../assets/images/covers/harmony-eeg.svg" alt="" width="1600" height="900" loading="lazy">
+    <span class="badge badge--on-image">鸿蒙与物联网</span>
+  </a>
+  <div class="card-body">
+    <div class="card-meta">
+      <span class="card-meta__row"><svg class="icon icon--sm" aria-hidden="true" focusable="false"><use href="#i-time-outline"></use></svg>11 分钟</span>
+      <span class="dot-sep"></span>
+      <time datetime="2026-10-12">2026-10-12</time>
+    </div>
+    <h3><a href="../posts/harmony-eeg.html">把 Python 训好的 MLP 搬进 ArkTS：鸿蒙脑电监测里的零依赖推理</a></h3>
+    <p class="card-excerpt">从 TGAM 传感器到 Canvas 波形，端到端一个人写完。最难的不是蓝牙，而是怎么把 Python 训练出来的权重，装进一个不能装第三方库的 ArkTS 工程里。</p>
+    <div class="card-foot">
+      <div class="card-tags"><span>#ArkTS</span><span>#BLE 5.0</span></div>
+      <a class="btn-link" href="../posts/harmony-eeg.html">阅读 <svg class="icon icon--sm" aria-hidden="true" focusable="false"><use href="#i-arrow-forward-outline"></use></svg></a>
+    </div>
+  </div>
+</article>
+<article class="post-card" data-post data-cat="harmony" data-search-text="BLE 5.0 联调笔记：MTU、分片、断线重连，这三件事决定数据稳不稳 低功耗蓝牙的坑几乎都集中在三个地方：MTU 没谈、包没拼、断了没重订阅。把这三件事处理干净，剩下的都是业务代码。 BLE 5.0 GATT 调试 鸿蒙与物联网" data-reveal style="--delay:120ms">
+  <a class="card-banner img-holder" href="../posts/ble-gatt.html" aria-label="BLE 5.0 联调笔记：MTU、分片、断线重连，这三件事决定数据稳不稳">
+    <img src="../assets/images/covers/ble-gatt.svg" alt="" width="1600" height="900" loading="lazy">
+    <span class="badge badge--on-image">鸿蒙与物联网</span>
+  </a>
+  <div class="card-body">
+    <div class="card-meta">
+      <span class="card-meta__row"><svg class="icon icon--sm" aria-hidden="true" focusable="false"><use href="#i-time-outline"></use></svg>9 分钟</span>
+      <span class="dot-sep"></span>
+      <time datetime="2026-09-27">2026-09-27</time>
+    </div>
+    <h3><a href="../posts/ble-gatt.html">BLE 5.0 联调笔记：MTU、分片、断线重连，这三件事决定数据稳不稳</a></h3>
+    <p class="card-excerpt">低功耗蓝牙的坑几乎都集中在三个地方：MTU 没谈、包没拼、断了没重订阅。把这三件事处理干净，剩下的都是业务代码。</p>
+    <div class="card-foot">
+      <div class="card-tags"><span>#BLE 5.0</span><span>#GATT</span></div>
+      <a class="btn-link" href="../posts/ble-gatt.html">阅读 <svg class="icon icon--sm" aria-hidden="true" focusable="false"><use href="#i-arrow-forward-outline"></use></svg></a>
+    </div>
+  </div>
+</article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--tight">
+  <div class="container">
+    <div class="cta-band" data-reveal>
+      <h2>有项目、有岗位，或者只是想聊聊技术？</h2>
+      <p>实习、项目合作、技术讨论都欢迎。邮件通常一天内回复，急事直接打电话。</p>
+      <div class="actions">
+        <a class="btn btn-primary" href="../contact.html">发消息给我 <svg class="icon icon--sm" aria-hidden="true" focusable="false"><use href="#i-paper-plane-outline"></use></svg></a>
+        <a class="btn btn-ghost" href="../assets/files/huangshaorong-resume.pdf" download><svg class="icon icon--sm" aria-hidden="true" focusable="false"><use href="#i-download-outline"></use></svg> 下载简历 PDF</a>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <a class="brand" href="../index.html">
+          <img src="../assets/images/logo.svg" width="38" height="38" alt="">
+          <span class="brand-name"><b>黄少荣</b><span>HSR · BLOG</span></span>
+        </a>
+        <p>广州，物联网工程（师范）本科在读，2028 届。做过 Vue 3 + Spring Boot 全栈、鸿蒙 BLE 脑电监测、师范生教学能力诊断平台；习惯把 AI 当成结对工程师，也坚持自己把最后一公里跑通。</p>
+        <div class="footer-contact">
+          <a href="mailto:3233721297@qq.com"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-mail-outline"></use></svg>3233721297@qq.com</a>
+          <a href="tel:19806866558"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-call-outline"></use></svg>19806866558</a>
+          <span><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-location-outline"></use></svg>广州 · 广东湛江</span>
+        </div>
+      </div>
+
+      <div class="footer-col">
+        <h2>文章分类</h2>
+        <ul class="footer-links"><a href="../blog.html?cat=fullstack">全栈开发</a><a href="../blog.html?cat=harmony">鸿蒙与物联网</a><a href="../blog.html?cat=testing">软件测试</a><a href="../blog.html?cat=backend">后端与数据</a><a href="../blog.html?cat=ai">AI 编程</a><a href="../blog.html?cat=modeling">数学建模</a><a href="../blog.html?cat=essay">随笔</a></ul>
+      </div>
+
+      <div class="footer-col">
+        <h2>站内导航</h2>
+        <ul class="footer-links">
+          <li><a href="../index.html">首页</a></li>
+          <li><a href="../blog.html">全部文章</a></li>
+          <li><a href="../projects.html">项目档案</a></li>
+          <li><a href="../about.html">关于我</a></li>
+          <li><a href="../contact.html">联系方式</a></li>
+          <li><a href="../assets/files/huangshaorong-resume.pdf" download>下载简历</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h2>订阅更新</h2>
+        <form class="subscribe" data-subscribe novalidate>
+          <div class="row">
+            <input type="email" name="email" placeholder="你的邮箱" autocomplete="email" aria-label="你的邮箱">
+            <button class="btn btn-primary btn-sm" type="submit">订阅</button>
+          </div>
+          <small>新文章出来时通知你，不发广告。订阅数据将在站点接入数据库后统一管理。</small>
+        </form>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p>© <span data-year>2026</span> 黄少荣 · hsr.ct.ws · 版式参考开源模板 Wren</p>
+      <ul class="socials">
+        <li><a class="social-link" href="mailto:3233721297@qq.com" aria-label="邮件"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-mail-outline"></use></svg></a></li>
+        <li><a class="social-link" href="#" data-github aria-label="GitHub" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-logo-github"></use></svg></a></li>
+        <li><a class="social-link" href="tel:19806866558" aria-label="电话"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-call-outline"></use></svg></a></li>
+      </ul>
+    </div>
+  </div>
+</footer>
+
+<a class="to-top" href="#main" data-to-top aria-label="回到顶部"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-arrow-up-outline"></use></svg></a>
+<script src="../assets/js/site.js"></script>
+</body>
+</html>

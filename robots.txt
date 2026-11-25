@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://hsr.ct.ws/sitemap.xml

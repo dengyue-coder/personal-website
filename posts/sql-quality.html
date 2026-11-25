@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>用 SQL 做数据质量核查：一份能直接抄的检查清单 · 黄少荣的个人博客</title>
+<meta name="description" content="在线测验、志愿服务、政务档案，三次经历里都在做同一件事：确认数据是对的。把它抽象成六类检查，用 SQL 表达出来。">
+<meta name="author" content="黄少荣">
+<meta name="theme-color" content="#070d18">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="黄少荣 · hsr.ct.ws">
+<meta property="og:title" content="用 SQL 做数据质量核查：一份能直接抄的检查清单 · 黄少荣的个人博客">
+<meta property="og:description" content="在线测验、志愿服务、政务档案，三次经历里都在做同一件事：确认数据是对的。把它抽象成六类检查，用 SQL 表达出来。">
+<meta property="og:locale" content="zh_CN">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../assets/images/avatar.png">
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true"><symbol id="i-arrow-forward-outline" viewBox="0 0 512 512"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="48" d="M268 112l144 144-144 144M392 256H100"/></symbol>
+<symbol id="i-arrow-up-outline" viewBox="0 0 512 512"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="48" d="M112 244l144-144 144 144M256 120v292"/></symbol>
+<symbol id="i-calendar-outline" viewBox="0 0 512 512"><rect fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="32" x="48" y="80" width="416" height="384" rx="48"/><circle cx="296" cy="232" r="24"/><circle cx="376" cy="232" r="24"/><circle cx="296" cy="312" r="24"/><circle cx="376" cy="312" r="24"/><circle cx="136" cy="312" r="24"/><circle cx="216" cy="312" r="24"/><circle cx="136" cy="392" r="24"/><circle cx="216" cy="392" r="24"/><circle cx="296" cy="392" r="24"/><path fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="32" stroke-linecap="round" d="M128 48v32M384 48v32"/><path fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="32" d="M464 160H48"/></symbol>
+<symbol id="i-call-outline" viewBox="0 0 512 512"><path d="M451 374c-15.88-16-54.34-39.35-73-48.76-24.3-12.24-26.3-13.24-45.4.95-12.74 9.47-21.21 17.93-36.12 14.75s-47.31-21.11-75.68-49.39-47.34-61.62-50.53-76.48 5.41-23.23 14.79-36c13.22-18 12.22-21 .92-45.3-8.81-18.9-32.84-57-48.9-72.8C119.9 44 119.9 47 108.83 51.6A160.15 160.15 0 0083 65.37C67 76 58.12 84.83 51.91 98.1s-9 44.38 23.07 102.64 54.57 88.05 101.14 134.49S258.5 406.64 310.85 436c64.76 36.27 89.6 29.2 102.91 23s22.18-15 32.83-31a159.09 159.09 0 0013.8-25.8C465 391.17 468 391.17 451 374z" fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="32"/></symbol>
+<symbol id="i-close-outline" viewBox="0 0 512 512"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="32" d="M368 368L144 144M368 144L144 368"/></symbol>
+<symbol id="i-download-outline" viewBox="0 0 512 512"><path d="M336 176h40a40 40 0 0140 40v208a40 40 0 01-40 40H136a40 40 0 01-40-40V216a40 40 0 0140-40h40" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="32"/><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="32" d="M176 272l80 80 80-80M256 48v288"/></symbol>
+<symbol id="i-link-outline" viewBox="0 0 512 512"><path d="M208 352h-64a96 96 0 010-192h64M304 160h64a96 96 0 010 192h-64M163.29 256h187.42" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="36"/></symbol>
+<symbol id="i-location-outline" viewBox="0 0 512 512"><path d="M256 48c-79.5 0-144 61.39-144 137 0 87 96 224.87 131.25 272.49a15.77 15.77 0 0025.5 0C304 409.89 400 272.07 400 185c0-75.61-64.5-137-144-137z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="32"/><circle cx="256" cy="192" r="48" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="32"/></symbol>
+<symbol id="i-logo-github" viewBox="0 0 512 512"><path d="M256 32C132.3 32 32 134.9 32 261.7c0 101.5 64.2 187.5 153.2 217.9a17.56 17.56 0 003.8.4c8.3 0 11.5-6.1 11.5-11.4 0-5.5-.2-19.9-.3-39.1a102.4 102.4 0 01-22.6 2.7c-43.1 0-52.9-33.5-52.9-33.5-10.2-26.5-24.9-33.6-24.9-33.6-19.5-13.7-.1-14.1 1.4-14.1h.1c22.5 2 34.3 23.8 34.3 23.8 11.2 19.6 26.2 25.1 39.6 25.1a63 63 0 0025.6-6c2-14.8 7.8-24.9 14.2-30.7-49.7-5.8-102-25.5-102-113.5 0-25.1 8.7-45.6 23-61.6-2.3-5.8-10-29.2 2.2-60.8a18.64 18.64 0 015-.5c8.1 0 26.4 3.1 56.6 24.1a208.21 208.21 0 01112.2 0c30.2-21 48.5-24.1 56.6-24.1a18.64 18.64 0 015 .5c12.2 31.6 4.5 55 2.2 60.8 14.3 16.1 23 36.6 23 61.6 0 88.2-52.4 107.6-102.3 113.3 8 7.1 15.2 21.1 15.2 42.5 0 30.7-.3 55.5-.3 63 0 5.4 3.1 11.5 11.4 11.5a19.35 19.35 0 004-.4C415.9 449.2 480 363.1 480 261.7 480 134.9 379.7 32 256 32z"/></symbol>
+<symbol id="i-mail-outline" viewBox="0 0 512 512"><rect x="48" y="96" width="416" height="320" rx="40" ry="40" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="32"/><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="32" d="M112 160l144 112 144-112"/></symbol>
+<symbol id="i-menu-outline" viewBox="0 0 512 512"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="32" d="M80 160h352M80 256h352M80 352h352"/></symbol>
+<symbol id="i-paper-plane-outline" viewBox="0 0 512 512"><path d="M53.12 199.94l400-151.39a8 8 0 0110.33 10.33l-151.39 400a8 8 0 01-15-.34l-67.4-166.09a16 16 0 00-10.11-10.11L53.46 215a8 8 0 01-.34-15.06zM460 52L227 285" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="32"/></symbol>
+<symbol id="i-time-outline" viewBox="0 0 512 512"><path d="M256 64C150 64 64 150 64 256s86 192 192 192 192-86 192-192S362 64 256 64z" fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="32"/><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="32" d="M256 128v144h96"/></symbol></svg>
+<a class="skip-link" href="#main">跳到正文</a>
+
+<header class="site-header" data-header>
+  <div class="container header-inner">
+    <a class="brand" href="../index.html" aria-label="黄少荣 · 首页">
+      <img src="../assets/images/logo.svg" width="38" height="38" alt="">
+      <span class="brand-name"><b>黄少荣</b><span>HSR · BLOG</span></span>
+    </a>
+
+    <nav class="nav" data-nav aria-label="主导航">
+      <div class="nav-top">
+        <a class="brand" href="../index.html">
+          <img src="../assets/images/logo.svg" width="34" height="34" alt="">
+          <span class="brand-name"><b>黄少荣</b><span>HSR · BLOG</span></span>
+        </a>
+        <button class="nav-toggle" type="button" data-nav-close aria-label="关闭菜单"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-close-outline"></use></svg></button>
+      </div>
+      <ul class="nav-list">
+          <li><a class="nav-link" href="../index.html">首页</a></li>
+          <li><a class="nav-link is-active" href="../blog.html">博客</a></li>
+          <li><a class="nav-link" href="../projects.html">项目</a></li>
+          <li><a class="nav-link" href="../about.html">关于我</a></li>
+          <li><a class="nav-link" href="../contact.html">联系我</a></li>
+      </ul>
+      <div class="nav-foot">
+        <a class="btn btn-primary btn-sm" href="../contact.html">聊聊合作 <svg class="icon icon--sm" aria-hidden="true" focusable="false"><use href="#i-arrow-forward-outline"></use></svg></a>
+        <a class="btn btn-ghost btn-sm" href="../assets/files/huangshaorong-resume.pdf" download>下载简历 PDF <svg class="icon icon--sm" aria-hidden="true" focusable="false"><use href="#i-download-outline"></use></svg></a>
+      </div>
+    </nav>
+
+    <div class="header-actions">
+      <a class="btn btn-primary btn-sm" href="../contact.html">聊一聊 <svg class="icon icon--sm" aria-hidden="true" focusable="false"><use href="#i-arrow-forward-outline"></use></svg></a>
+      <button class="nav-toggle" type="button" data-nav-toggle aria-label="打开菜单" aria-expanded="false"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-menu-outline"></use></svg></button>
+    </div>
+  </div>
+</header>
+<div class="nav-scrim" data-nav-scrim></div>
+
+<div class="read-progress" data-progress></div>
+<main id="main">
+  <article>
+    <header class="article-head">
+      <div class="container">
+        <nav class="crumbs" aria-label="面包屑">
+          <a href="../index.html">首页</a><span>/</span>
+          <a href="../blog.html">博客</a><span>/</span>
+          <a href="../blog.html?cat=testing">软件测试</a>
+        </nav>
+        <h1>用 SQL 做数据质量核查：一份能直接抄的检查清单</h1>
+        <p class="article-lead">数据核查听起来很虚，落到 SQL 上其实就六类检查。这份清单在日常开发和测试回归里都能直接用。</p>
+        <div class="article-meta">
+          <div class="author">
+            <img src="../assets/images/portrait.jpg" width="42" height="42" alt="黄少荣">
+            <div><b>黄少荣</b><span>物联网工程（师范）</span></div>
+          </div>
+          <span class="meta-sep"></span>
+          <span class="card-meta__row"><svg class="icon icon--sm" aria-hidden="true" focusable="false"><use href="#i-calendar-outline"></use></svg>2026 年 6 月 20 日</span>
+          <span class="card-meta__row"><svg class="icon icon--sm" aria-hidden="true" focusable="false"><use href="#i-time-outline"></use></svg>7 分钟阅读</span>
+          <span class="badge">软件测试</span>
+        </div>
+      </div>
+      <div class="container">
+        <figure class="article-cover">
+          <img src="../assets/images/covers/sql-quality.svg" alt="" width="1600" height="900">
+        </figure>
+      </div>
+    </header>
+
+    <div class="container article-layout">
+      <div class="prose" data-article-body>
+
+<h2>六类检查</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>类型</th><th>问的问题</th><th>典型场景</th></tr></thead>
+<tbody>
+<tr><td>完整性</td><td>必填的有没有缺</td><td>手机号、服务时长、评价时间</td></tr>
+<tr><td>唯一性</td><td>该唯一的有没有重复</td><td>同一人对同一服务重复评价</td></tr>
+<tr><td>一致性</td><td>两处说法是否相同</td><td>订单状态 vs 服务记录状态</td></tr>
+<tr><td>有效性</td><td>值是否在允许范围</td><td>时长 0 分钟、评分 6 分</td></tr>
+<tr><td>及时性</td><td>时间线是否合理</td><td>完成时间早于开始时间</td></tr>
+<tr><td>业务规则</td><td>业务约束是否成立</td><td>一个志愿者同时段接两单</td></tr>
+</tbody>
+</table></div>
+
+<h2>完整性</h2>
+<pre><code>-- 必填字段缺失
+select count(*) as missing
+from service_record
+where volunteer_id is null
+   or start_time is null
+   or duration_minutes is null
+   or duration_minutes = 0;</code></pre>
+
+<h2>唯一性</h2>
+<pre><code>-- 同一预约被重复评价
+select appointment_id, count(*) as c
+from evaluation
+group by appointment_id
+having c &gt; 1;</code></pre>
+
+<h2>一致性：跨表对账</h2>
+<pre><code>-- 预约已完成，但服务记录不存在（孤儿数据）
+select a.id
+from appointment a
+left join service_record s on s.appointment_id = a.id
+where a.status = 'COMPLETED'
+  and s.id is null;
+
+-- 两侧状态不一致
+select a.id, a.status, s.status
+from appointment a
+join service_record s on s.appointment_id = a.id
+where a.status &lt;&gt; s.status;</code></pre>
+<p>一致性检查最好成对写：正查（该有的没有）+ 反查（不该有的有了）。只写一半，漏掉的正好是最难发现的那一半。</p>
+
+<h2>有效性 + 及时性</h2>
+<pre><code>-- 数值越界
+select * from service_record
+where duration_minutes &lt; 0 or duration_minutes &gt; 480;
+
+-- 时间线倒挂
+select * from service_record
+where end_time &lt; start_time
+   or created_at &gt; start_time;
+
+-- 未来时间（脏数据常见来源：手动改库、时区错）
+select * from appointment
+where created_at &gt; now();</code></pre>
+
+<h2>业务规则</h2>
+<pre><code>-- 同一志愿者同一时段被安排了两单
+select volunteer_id, start_time, count(*) as c
+from service_record
+group by volunteer_id, start_time
+having c &gt; 1;</code></pre>
+
+<h2>异常值：IQR 比 3σ 更实用</h2>
+<p>业务数据很少是正态分布，"均值 ± 3 倍标准差"会把正常的长尾当异常。用四分位距更稳：</p>
+<pre><code>with ranked as (
+  select duration_minutes as v,
+         row_number() over (order by duration_minutes) as rn,
+         count(*) over () as n
+  from service_record
+  where duration_minutes is not null
+), q as (
+  select
+    max(case when rn = floor(n * 0.25) then v end) as q1,
+    max(case when rn = floor(n * 0.75) then v end) as q3
+  from ranked
+)
+select r.v
+from ranked r, q
+where r.v &lt; q.q1 - 1.5 * (q.q3 - q.q1)
+   or r.v &gt; q.q3 + 1.5 * (q.q3 - q.q1);</code></pre>
+<p>数据量大时，这套 SQL 可以固化成视图或定时任务，每天跑一次，结果写进核查日志表，异常直接推送。</p>
+
+<h2>Python 做补充</h2>
+<p>SQL 擅长规则明确的结构化检查；跨文件、跨格式（Excel + 数据库 + 问卷导出）的核查交给 Python 更省事。我的习惯是：<strong>能用一条 SQL 说清的绝不写脚本</strong>，因为 SQL 可复用、可 review、可交给别人跑。</p>
+
+<h2>报告怎么写</h2>
+<p>每轮核查输出一张表：检查项、覆盖范围、异常数量、样例 ID、判定。别只写"数据正常"——写清楚"查了什么、查了多少、剩下什么风险"。这句话在实习汇报里救过我一次。</p>
+
+        <div class="article-foot">
+          <div class="row">
+            <div class="chip-list"><a class="chip" href="../blog.html?cat=testing">MySQL</a><a class="chip" href="../blog.html?cat=testing">数据核查</a><a class="chip" href="../blog.html?cat=testing">Python</a></div>
+            <div class="share-row">
+              <button class="btn-icon" type="button" data-copy-link aria-label="复制本文链接"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-link-outline"></use></svg></button>
+              <a class="btn-icon" href="mailto:3233721297@qq.com?subject=用 SQL 做数据质量核查：一份能直接抄的检查清单" aria-label="邮件分享"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-mail-outline"></use></svg></a>
+            </div>
+          </div>
+          <nav class="post-nav" aria-label="上一篇下一篇"><a href="../posts/yinling-test.html"><span>上一篇</span><b>银铃陪护小程序测试复盘：那些“看起来没问题”的缺陷</b></a><a href="../posts/vibe-coding.html"><span>下一篇</span><b>Vibe-Coding 工作流：把需求拆成提示词的五步</b></a></nav>
+        </div>
+      </div>
+
+      <aside class="toc" data-toc>
+        <p class="toc-title">本文目录</p>
+        <ul class="toc-list" data-toc-list></ul>
+        <div class="toc-cta">
+          看完有问题？<a class="btn-link" href="../contact.html">直接问我 <svg class="icon icon--sm" aria-hidden="true" focusable="false"><use href="#i-arrow-forward-outline"></use></svg></a>
+        </div>
+      </aside>
+    </div>
+  </article>
+
+  <section class="section section--tight">
+    <div class="container">
+      <div class="section-head"><div><h2 class="section-title">相关文章</h2></div></div>
+      <div class="post-grid">
+<article class="post-card" data-post data-cat="testing" data-search-text="银铃陪护小程序测试复盘：那些“看起来没问题”的缺陷 首页看板数字对不上、系统名称前后不一致、测试数据混进真实列表——这些都不是崩溃级问题，却最容易被用户第一时间发现。 测试用例 缺陷管理 数据一致性 软件测试" data-reveal style="--delay:0ms">
+  <a class="card-banner img-holder" href="../posts/yinling-test.html" aria-label="银铃陪护小程序测试复盘：那些“看起来没问题”的缺陷">
+    <img src="../assets/images/covers/yinling-test.svg" alt="" width="1600" height="900" loading="lazy">
+    <span class="badge badge--on-image">软件测试</span>
+  </a>
+  <div class="card-body">
+    <div class="card-meta">
+      <span class="card-meta__row"><svg class="icon icon--sm" aria-hidden="true" focusable="false"><use href="#i-time-outline"></use></svg>8 分钟</span>
+      <span class="dot-sep"></span>
+      <time datetime="2026-05-16">2026-05-16</time>
+    </div>
+    <h3><a href="../posts/yinling-test.html">银铃陪护小程序测试复盘：那些“看起来没问题”的缺陷</a></h3>
+    <p class="card-excerpt">首页看板数字对不上、系统名称前后不一致、测试数据混进真实列表——这些都不是崩溃级问题，却最容易被用户第一时间发现。</p>
+    <div class="card-foot">
+      <div class="card-tags"><span>#测试用例</span><span>#缺陷管理</span></div>
+      <a class="btn-link" href="../posts/yinling-test.html">阅读 <svg class="icon icon--sm" aria-hidden="true" focusable="false"><use href="#i-arrow-forward-outline"></use></svg></a>
+    </div>
+  </div>
+</article>
+<article class="post-card" data-post data-cat="backend" data-search-text="智教棱镜：275 个节点的能力图谱，怎么从标准文件变成可查询的结构 把师范生教师职业能力标准拆成 7 类节点、7 类关系，做成 275 节点 / 298 关系的图谱，再用六个智能体在图上做诊断。踩得最狠的坑是 schema 没定就先写代码。 Neo4j Flask 知识图谱 Docker 后端与数据" data-reveal style="--delay:60ms">
+  <a class="card-banner img-holder" href="../posts/eduprism.html" aria-label="智教棱镜：275 个节点的能力图谱，怎么从标准文件变成可查询的结构">
+    <img src="../assets/images/covers/eduprism.svg" alt="" width="1600" height="900" loading="lazy">
+    <span class="badge badge--on-image">后端与数据</span>
+  </a>
+  <div class="card-body">
+    <div class="card-meta">
+      <span class="card-meta__row"><svg class="icon icon--sm" aria-hidden="true" focusable="false"><use href="#i-time-outline"></use></svg>13 分钟</span>
+      <span class="dot-sep"></span>
+      <time datetime="2026-10-22">2026-10-22</time>
+    </div>
+    <h3><a href="../posts/eduprism.html">智教棱镜：275 个节点的能力图谱，怎么从标准文件变成可查询的结构</a></h3>
+    <p class="card-excerpt">把师范生教师职业能力标准拆成 7 类节点、7 类关系，做成 275 节点 / 298 关系的图谱，再用六个智能体在图上做诊断。踩得最狠的坑是 schema 没定就先写代码。</p>
+    <div class="card-foot">
+      <div class="card-tags"><span>#Neo4j</span><span>#Flask</span></div>
+      <a class="btn-link" href="../posts/eduprism.html">阅读 <svg class="icon icon--sm" aria-hidden="true" focusable="false"><use href="#i-arrow-forward-outline"></use></svg></a>
+    </div>
+  </div>
+</article>
+<article class="post-card" data-post data-cat="harmony" data-search-text="把 Python 训好的 MLP 搬进 ArkTS：鸿蒙脑电监测里的零依赖推理 从 TGAM 传感器到 Canvas 波形，端到端一个人写完。最难的不是蓝牙，而是怎么把 Python 训练出来的权重，装进一个不能装第三方库的 ArkTS 工程里。 ArkTS BLE 5.0 MLP Canvas 2D 鸿蒙与物联网" data-reveal style="--delay:120ms">
+  <a class="card-banner img-holder" href="../posts/harmony-eeg.html" aria-label="把 Python 训好的 MLP 搬进 ArkTS：鸿蒙脑电监测里的零依赖推理">
+    <img src="../assets/images/covers/harmony-eeg.svg" alt="" width="1600" height="900" loading="lazy">
+    <span class="badge badge--on-image">鸿蒙与物联网</span>
+  </a>
+  <div class="card-body">
+    <div class="card-meta">
+      <span class="card-meta__row"><svg class="icon icon--sm" aria-hidden="true" focusable="false"><use href="#i-time-outline"></use></svg>11 分钟</span>
+      <span class="dot-sep"></span>
+      <time datetime="2026-10-12">2026-10-12</time>
+    </div>
+    <h3><a href="../posts/harmony-eeg.html">把 Python 训好的 MLP 搬进 ArkTS：鸿蒙脑电监测里的零依赖推理</a></h3>
+    <p class="card-excerpt">从 TGAM 传感器到 Canvas 波形，端到端一个人写完。最难的不是蓝牙，而是怎么把 Python 训练出来的权重，装进一个不能装第三方库的 ArkTS 工程里。</p>
+    <div class="card-foot">
+      <div class="card-tags"><span>#ArkTS</span><span>#BLE 5.0</span></div>
+      <a class="btn-link" href="../posts/harmony-eeg.html">阅读 <svg class="icon icon--sm" aria-hidden="true" focusable="false"><use href="#i-arrow-forward-outline"></use></svg></a>
+    </div>
+  </div>
+</article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--tight">
+  <div class="container">
+    <div class="cta-band" data-reveal>
+      <h2>有项目、有岗位，或者只是想聊聊技术？</h2>
+      <p>实习、项目合作、技术讨论都欢迎。邮件通常一天内回复，急事直接打电话。</p>
+      <div class="actions">
+        <a class="btn btn-primary" href="../contact.html">发消息给我 <svg class="icon icon--sm" aria-hidden="true" focusable="false"><use href="#i-paper-plane-outline"></use></svg></a>
+        <a class="btn btn-ghost" href="../assets/files/huangshaorong-resume.pdf" download><svg class="icon icon--sm" aria-hidden="true" focusable="false"><use href="#i-download-outline"></use></svg> 下载简历 PDF</a>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <a class="brand" href="../index.html">
+          <img src="../assets/images/logo.svg" width="38" height="38" alt="">
+          <span class="brand-name"><b>黄少荣</b><span>HSR · BLOG</span></span>
+        </a>
+        <p>广州，物联网工程（师范）本科在读，2028 届。做过 Vue 3 + Spring Boot 全栈、鸿蒙 BLE 脑电监测、师范生教学能力诊断平台；习惯把 AI 当成结对工程师，也坚持自己把最后一公里跑通。</p>
+        <div class="footer-contact">
+          <a href="mailto:3233721297@qq.com"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-mail-outline"></use></svg>3233721297@qq.com</a>
+          <a href="tel:19806866558"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-call-outline"></use></svg>19806866558</a>
+          <span><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-location-outline"></use></svg>广州 · 广东湛江</span>
+        </div>
+      </div>
+
+      <div class="footer-col">
+        <h2>文章分类</h2>
+        <ul class="footer-links"><a href="../blog.html?cat=fullstack">全栈开发</a><a href="../blog.html?cat=harmony">鸿蒙与物联网</a><a href="../blog.html?cat=testing">软件测试</a><a href="../blog.html?cat=backend">后端与数据</a><a href="../blog.html?cat=ai">AI 编程</a><a href="../blog.html?cat=modeling">数学建模</a><a href="../blog.html?cat=essay">随笔</a></ul>
+      </div>
+
+      <div class="footer-col">
+        <h2>站内导航</h2>
+        <ul class="footer-links">
+          <li><a href="../index.html">首页</a></li>
+          <li><a href="../blog.html">全部文章</a></li>
+          <li><a href="../projects.html">项目档案</a></li>
+          <li><a href="../about.html">关于我</a></li>
+          <li><a href="../contact.html">联系方式</a></li>
+          <li><a href="../assets/files/huangshaorong-resume.pdf" download>下载简历</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h2>订阅更新</h2>
+        <form class="subscribe" data-subscribe novalidate>
+          <div class="row">
+            <input type="email" name="email" placeholder="你的邮箱" autocomplete="email" aria-label="你的邮箱">
+            <button class="btn btn-primary btn-sm" type="submit">订阅</button>
+          </div>
+          <small>新文章出来时通知你，不发广告。订阅数据将在站点接入数据库后统一管理。</small>
+        </form>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p>© <span data-year>2026</span> 黄少荣 · hsr.ct.ws · 版式参考开源模板 Wren</p>
+      <ul class="socials">
+        <li><a class="social-link" href="mailto:3233721297@qq.com" aria-label="邮件"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-mail-outline"></use></svg></a></li>
+        <li><a class="social-link" href="#" data-github aria-label="GitHub" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-logo-github"></use></svg></a></li>
+        <li><a class="social-link" href="tel:19806866558" aria-label="电话"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-call-outline"></use></svg></a></li>
+      </ul>
+    </div>
+  </div>
+</footer>
+
+<a class="to-top" href="#main" data-to-top aria-label="回到顶部"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-arrow-up-outline"></use></svg></a>
+<script src="../assets/js/site.js"></script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-label="">
+<defs>
+<linearGradient id="bgc3" x1="0" y1="0" x2="1" y2="1">
+  <stop offset="0" stop-color="#120f1c"/><stop offset="1" stop-color="#20182c"/>
+</linearGradient>
+<radialGradient id="g1c3" cx="0.5" cy="0.5" r="0.5">
+  <stop offset="0" stop-color="#f59e0b" stop-opacity="0.55"/>
+  <stop offset="0.55" stop-color="#f59e0b" stop-opacity="0.16"/>
+  <stop offset="1" stop-color="#f59e0b" stop-opacity="0"/>
+</radialGradient>
+<radialGradient id="g2c3" cx="0.5" cy="0.5" r="0.5">
+  <stop offset="0" stop-color="#f43f5e" stop-opacity="0.42"/>
+  <stop offset="0.6" stop-color="#f43f5e" stop-opacity="0.12"/>
+  <stop offset="1" stop-color="#f43f5e" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="fadec3" x1="0" y1="0" x2="1" y2="0">
+  <stop offset="0" stop-color="#ffffff" stop-opacity="0.55"/>
+  <stop offset="0.55" stop-color="#ffffff" stop-opacity="0.16"/>
+  <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+</linearGradient>
+<linearGradient id="vfadec3" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="#ffffff" stop-opacity="0"/>
+  <stop offset="0.55" stop-color="#ffffff" stop-opacity="0.3"/>
+  <stop offset="1" stop-color="#ffffff" stop-opacity="0.62"/>
+</linearGradient>
+<pattern id="dotsc3" width="26" height="26" patternUnits="userSpaceOnUse">
+  <circle cx="1.6" cy="1.6" r="1.6" fill="#ffffff" fill-opacity="0.16"/>
+</pattern>
+<mask id="m1c3"><rect width="1600" height="900" fill="url(#fadec3)"/></mask>
+<mask id="m2c3"><rect width="1600" height="900" fill="url(#vfadec3)"/></mask>
+<filter id="softc3" x="-40%" y="-40%" width="180%" height="180%">
+  <feGaussianBlur stdDeviation="26"/>
+</filter>
+</defs>
+<rect width="1600" height="900" fill="url(#bgc3)"/>
+<circle cx="1152.0" cy="378.0" r="832.0" fill="url(#g1c3)"/><circle cx="480.0" cy="855.0" r="880.0000000000001" fill="url(#g2c3)"/>
+<rect width="1600" height="900" fill="url(#dotsc3)" mask="url(#m1c3)" opacity="0.9"/>
+<g opacity="0.92"><g transform="translate(896,215) scale(1.18)" opacity="0.95"><g stroke="#f59e0b" fill="none" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+  <rect x="40" y="70" width="46" height="46" rx="14" opacity="0.95"/><path d="M52 94l12 13 20-24" opacity="0.95" stroke-width="8"/><path d="M112 93h210" opacity="0.5225" stroke-width="10"/><rect x="40" y="168" width="46" height="46" rx="14" opacity="0.73"/><path d="M52 192l12 13 20-24" opacity="0.73" stroke-width="8"/><path d="M112 191h250" opacity="0.4015" stroke-width="10"/><rect x="40" y="266" width="46" height="46" rx="14" opacity="0.51"/><path d="M52 290l12 13 20-24" opacity="0.51" stroke-width="8"/><path d="M112 289h180" opacity="0.2805" stroke-width="10"/>
+  <circle cx="318" cy="286" r="52" opacity="0.85"/>
+  <path d="M300 268c10-16 32-10 30 8-2 20-26 22-26 42" opacity="0.85"/>
+  <circle cx="304" cy="330" r="5" fill="#f59e0b" stroke="none" opacity="0.9"/>
+  <path d="M296 116h44M310 96v-22M326 96v-22" opacity="0.5"/>
+</g></g></g>
+<rect width="1600" height="900" fill="url(#bgc3)" opacity="0.18"/>
+</svg>
